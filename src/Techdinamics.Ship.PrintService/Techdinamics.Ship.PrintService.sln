@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService", "Techdinamics.Ship.PrintService.csproj", "{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.PrintClient", "..\Techdinamics.PrintClient\Techdinamics.PrintClient.csproj", "{FF26B511-D218-445B-9413-60FD55D60089}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF26B511-D218-445B-9413-60FD55D60089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF26B511-D218-445B-9413-60FD55D60089}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
