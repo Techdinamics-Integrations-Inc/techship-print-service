@@ -1,6 +1,6 @@
 namespace Techdinamics.Ship.PrintService.Models;
 
-public enum PrinterConnectionType { Network, Local, File }
+public enum PrinterConnectionType { Network, Local }
 
 /// <summary>
 /// Single printer/portal configuration
@@ -17,14 +17,12 @@ public class PrinterConfiguration
     // ZPL Printer settings
     public PrinterConnectionType ZplConnectionType { get; set; } = PrinterConnectionType.Network;
     public string ZplPrinterAddress { get; set; } = string.Empty;  // For Network: IP:port (default 9100)
-    public string ZplPrinterName { get; set; } = string.Empty;     // For Local/USB: Windows printer name
-    public string ZplOutputFile { get; set; } = string.Empty;      // For File: output path (testing)
+    public string ZplPrinterName { get; set; } = string.Empty;     // For Local/USB: system printer name
     
     // PDF Printer settings
     public PrinterConnectionType PdfConnectionType { get; set; } = PrinterConnectionType.Local;
     public string PdfPrinterAddress { get; set; } = string.Empty;  // For Network: IP:port
     public string PdfPrinterName { get; set; } = string.Empty;     // For Local: system printer name
-    public string PdfOutputFile { get; set; } = string.Empty;      // For File: output path (testing)
     public string ThermalPdfPrinterName { get; set; } = string.Empty;  // For thermal label PDFs
     
     // Other settings

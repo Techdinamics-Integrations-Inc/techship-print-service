@@ -1,7 +1,7 @@
 # Print Service Rebuild - Project Plan Overview
 
 ## Summary
-Rebuild the legacy Techdinamics.PrintClient (WPF tray app) as a modern .NET service that runs in Docker containers across multiple platforms (Windows, Linux, macOS) and architectures (x64, ARM).
+Rebuild the legacy Techdinamics.PrintClient (WPF tray app) as a modern .NET service that runs exclusively in Linux Docker containers. The service is designed and supported only for Linux. If executed on other platforms, it will throw a platform compatibility exception.
 
 **Multi-Printer/Multi-Portal Support**: The service supports multiple printer/portal configurations running concurrently within a single Docker container. Each configuration runs as an independent worker thread monitoring its own queue and sending to its designated printer.
 
@@ -31,17 +31,16 @@ The service supports an **array of printer configurations**, each with:
 - API Secret
 - Connection Name (client key)
 - Printer ID
-- Printer settings with connection type (Network, Local/USB, or File for testing)
-- ZPL printer: network address:port OR local printer name OR output file path
-- PDF printer: local printer name OR output file path
+- Printer settings with connection type (Network or Local/USB)
+- ZPL printer: network address:port OR local printer name
+- PDF printer: local printer name
 - Enabled flag
 
 Each configuration spawns its own worker thread for concurrent processing.
 
 ## Printer Connection Types
 - **Network**: TCP socket to IP:port (default for Docker, ZPL port 9100)
-- **Local/USB**: Windows printer name via spooler, or CUPS on Linux
-- **File**: Output to file for testing without physical printers
+- **Local/USB**: Local printer name via CUPS (standard for the Linux container environment)
 
 ## Document Types Supported
 Orders can contain mixed document types:

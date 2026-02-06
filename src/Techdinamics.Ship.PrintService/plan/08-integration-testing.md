@@ -1,7 +1,7 @@
 # Subtask 08: Integration Testing with Mock Web Service
 
 ## Objective
-Create a mock web service and integration test environment to test the print service end-to-end in Docker, outputting to files instead of physical printers.
+Create a mock web service and integration test environment to test the print service end-to-end in Docker. Since local file output is disabled, integration tests should use virtual printers or network-based verification.
 
 ## Requirements
 
@@ -166,20 +166,15 @@ services:
       context: ./Techdinamics.Ship.PrintService
     depends_on:
       - mock-server
-    volumes:
-      - ./output/printer:/app/output
-      - ./config/test-appsettings.json:/app/appsettings.json:ro
     environment:
       - PrintService__Printers__0__Name=TestPrinter
       - PrintService__Printers__0__Portal=mock-server:8080
-      - PrintService__Printers__0__Username=testuser
-      - PrintService__Printers__0__Password=testpass
       - PrintService__Printers__0__ConnectionName=test-client
       - PrintService__Printers__0__PrinterId=test-printer-001
-      - PrintService__Printers__0__ZplConnectionType=File
-      - PrintService__Printers__0__ZplOutputFile=/app/output/zpl_output.txt
-      - PrintService__Printers__0__PdfConnectionType=File
-      - PrintService__Printers__0__PdfOutputFile=/app/output/pdf_output.pdf
+      - PrintService__Printers__0__ZplConnectionType=Network
+      - PrintService__Printers__0__ZplPrinterAddress=mock-printer:9100
+      - PrintService__Printers__0__PdfConnectionType=Local
+      - PrintService__Printers__0__PdfPrinterName=Virtual_PDF_Printer
 
 volumes:
   output:
@@ -253,26 +248,16 @@ Start-Sleep -Seconds $WaitSeconds
 # Check results
 Write-Host "`n5. Checking results..." -ForegroundColor Yellow
 
-# Check ZPL output
-if (Test-Path "$OutputDir/printer/zpl_output.txt") {
-    Write-Host "  ZPL Output:" -ForegroundColor Green
-    Get-Content "$OutputDir/printer/zpl_output.txt" | ForEach-Object { Write-Host "    $_" }
-} else {
-    Write-Host "  WARNING: No ZPL output file found" -ForegroundColor Red
-}
-
-# Check PDF output
-if (Test-Path "$OutputDir/printer/pdf_output.pdf") {
-    $pdfSize = (Get-Item "$OutputDir/printer/pdf_output.pdf").Length
-    Write-Host "  PDF Output: $pdfSize bytes" -ForegroundColor Green
-} else {
-    Write-Host "  WARNING: No PDF output file found" -ForegroundColor Red
-}
-
-# Check server print log
+# Verify job marked as printed on mock server
 Write-Host "`n6. Server print log:" -ForegroundColor Yellow
 $printedJobs = Invoke-RestMethod -Uri "http://localhost:5080/api/test/printed-log" -Method Get
 $printedJobs | ForEach-Object { Write-Host "  $_" -ForegroundColor Green }
+
+if ($printedJobs.Count -ge 2) {
+    Write-Host "  SUCCESS: At least 2 jobs were processed and confirmed." -ForegroundColor Green
+} else {
+    Write-Host "  FAILED: Not all jobs were processed." -ForegroundColor Red
+}
 
 # Cleanup
 if ($Cleanup) {
@@ -285,35 +270,21 @@ Write-Host "`n=== Integration Test Complete ===" -ForegroundColor Cyan
 
 ### 6. Windows Local Testing Guide (USB Printer Simulation)
 
-#### 6.1 Create a "Print to File" Printer on Windows
-```powershell
-# Create a local port that prints to file
-Add-PrinterPort -Name "FILE_ZPL:" -PrinterHostAddress "C:\PrintOutput\zpl_output.txt"
-Add-PrinterPort -Name "FILE_PDF:" -PrinterHostAddress "C:\PrintOutput\pdf_output.prn"
+#### 6.1 Simulation on Development Machine
+The service is designed to run exclusively on Linux. For development, use a Linux Docker container. Since `File` mode is removed, use a mock network printer (e.g., a simple TCP listener) or a virtual CUPS printer to verify output.
 
-# Or use Generic / Text Only driver with FILE: port
-Add-Printer -Name "Test-ZPL-Printer" -DriverName "Generic / Text Only" -PortName "FILE:"
-Add-Printer -Name "Test-PDF-Printer" -DriverName "Microsoft Print to PDF" -PortName "PORTPROMPT:"
-
-# Alternative: Use built-in "Microsoft XPS Document Writer" or "Microsoft Print to PDF"
-```
-
-#### 6.2 Configure Print Service for Local Testing
+#### 6.2 Configure Print Service for Local Testing (Network Mode)
 ```json
 {
   "PrintService": {
     "Printers": [
       {
-        "Name": "LocalTest",
+        "Name": "NetworkSimulation",
         "Portal": "localhost:5080",
-        "Username": "testuser",
-        "Password": "testpass",
         "ConnectionName": "test-client",
         "PrinterId": "local-test-001",
-        "ZplConnectionType": "Local",
-        "ZplPrinterName": "Test-ZPL-Printer",
-        "PdfConnectionType": "Local",
-        "PdfPrinterName": "Microsoft Print to PDF"
+        "ZplConnectionType": "Network",
+        "ZplPrinterAddress": "localhost:9100"
       }
     ]
   }
@@ -324,7 +295,7 @@ Add-Printer -Name "Test-PDF-Printer" -DriverName "Microsoft Print to PDF" -PortN
 1. Start mock server: `dotnet run --project Techdinamics.Ship.PrintService.MockServer`
 2. Add test jobs via API or pre-seed
 3. Start print service: `dotnet run --project Techdinamics.Ship.PrintService`
-4. Check printer output or file output
+4. Check file output in `C:\PrintOutput\`
 5. Verify server log shows jobs marked as printed
 
 ### 7. Automated Test Class
@@ -344,9 +315,6 @@ public class EndToEndTests : IAsyncLifetime
         
         // Act: Wait for processing
         await Task.Delay(5000);
-        
-        // Assert: Check file output exists
-        Assert.True(File.Exists("/output/zpl_output.txt"));
         
         // Assert: Check job marked as printed
         var printLog = await _mockServerClient.GetFromJsonAsync<List<string>>("/api/test/printed-log");
@@ -372,9 +340,7 @@ public class EndToEndTests : IAsyncLifetime
 - Mock server tracks printed/unprinted state and doesn't return already-printed jobs
 - Mock server logs all print confirmations to file
 - Docker compose brings up both mock server and print service
-- Print service outputs ZPL to text file
-- Print service outputs PDF to file
-- Integration test script verifies end-to-end flow
-- Windows local testing guide allows USB printer simulation
+- Integration test script verifies end-to-end flow via API confirmations
+- Windows local testing guide focuses on Network/CUPS simulation
 - Supports mixed document types (ZPL labels, PDF labels, PDF packing slips, etc.)
 - Test scenarios cover all document type combinations
