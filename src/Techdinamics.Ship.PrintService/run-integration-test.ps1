@@ -10,11 +10,11 @@ Write-Host "=== Print Service Integration Test ===" -ForegroundColor Cyan
 
 # Start services
 Write-Host "`n1. Starting Docker services..." -ForegroundColor Yellow
-docker-compose -f docker-compose.integration.yml up -d --build
+docker compose -f docker-compose.integration.yml up -d --build
 
 # Wait for services to be ready
 Write-Host "`n2. Waiting for services to start..." -ForegroundColor Yellow
-Start-Sleep -Seconds 10
+Start-Sleep -Seconds 20
 
 # Add test jobs via mock server API
 Write-Host "`n3. Adding test print jobs..." -ForegroundColor Yellow
@@ -68,7 +68,7 @@ if ($printedJobs.Count -ge 2) {
 # Cleanup
 if ($Cleanup) {
     Write-Host "`n7. Cleaning up..." -ForegroundColor Yellow
-    docker-compose -f docker-compose.integration.yml down
+    docker compose -f docker-compose.integration.yml down
 }
 
 Write-Host "`n=== Integration Test Complete ===" -ForegroundColor Cyan

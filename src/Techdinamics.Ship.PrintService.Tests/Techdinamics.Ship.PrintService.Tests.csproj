@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Techdinamics.Ship.PrintService\Techdinamics.Ship.PrintService.csproj" />
+    <ProjectReference Include="..\Techdinamics.Ship.PrintService\Techdinamics.Ship.PrintService.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,11 +11,18 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
 
+  mock-printer:
+    image: alpine:3.20
+    command: sh -c "apk add --no-cache socat >/dev/null 2>&1 && socat -v TCP-LISTEN:9100,fork,reuseaddr -"
+    expose:
+      - "9100"
+
   print-service:
     build:
       context: .
     depends_on:
       - mock-server
+      - mock-printer
     environment:
       - PrintService__Printers__0__Name=TestPrinter
       - PrintService__Printers__0__Portal=http://mock-server:8080
@@ -25,3 +32,4 @@ services:
       - PrintService__Printers__0__ZplPrinterAddress=mock-printer:9100
       - PrintService__Printers__0__PdfConnectionType=Local
       - PrintService__Printers__0__PdfPrinterName=Virtual_PDF_Printer
+      - PrintService__Printers__0__SkipPackingSlips=true

@@ -6,7 +6,7 @@ RUN dotnet restore -a $TARGETARCH
 COPY . .
 RUN dotnet publish Techdinamics.Ship.PrintService.csproj -a $TARGETARCH -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app .
 
