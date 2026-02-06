@@ -6,7 +6,7 @@ Rebuild the legacy Techdinamics.PrintClient (WPF tray app) as a modern .NET serv
 **Multi-Printer/Multi-Portal Support**: The service supports multiple printer/portal configurations running concurrently within a single Docker container. Each configuration runs as an independent worker thread monitoring its own queue and sending to its designated printer.
 
 ## Core Workflow (from legacy app analysis)
-1. Connect to web portal using credentials (Portal URL, Username, Password/ApiSecret, ConnectionName, PrinterId)
+1. Connect to web portal using credentials (Portal URL, ApiSecret, ConnectionName, PrinterId)
 2. Poll endpoint `Integration/ProcessNextOrderExt` for print jobs
 3. Download PDF or ZPL label data from response
 4. Print to configured printer (ZPL thermal, PDF, or generic)
@@ -28,8 +28,7 @@ Rebuild the legacy Techdinamics.PrintClient (WPF tray app) as a modern .NET serv
 ## Configuration Requirements
 The service supports an **array of printer configurations**, each with:
 - Portal URL
-- Username
-- Password or API Secret
+- API Secret
 - Connection Name (client key)
 - Printer ID
 - Printer settings with connection type (Network, Local/USB, or File for testing)
@@ -55,3 +54,4 @@ Orders can contain mixed document types:
 
 ## Notes
 - App Techdinamics.PrintClient is included to this repo for reference. Use it to check old functionality, but do not update or commit it.  
+- **Authentication Note**: Username/Password authentication has been deprecated and removed. The service now uses `ApiSecret` (sent via `x-secret-key` header) for authentication.

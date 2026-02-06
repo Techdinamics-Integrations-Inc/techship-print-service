@@ -9,8 +9,11 @@ I need to rebuild legacy application which runs un trey and connects web app and
  1. written in .NET
  2. Should run inside docker container.
  3. Should be compatible with different operating systems/architectures (i.e. I need to run docker container on windows, on linux, mac os, etc. - including server operating systems). I also would like to support both x86/x64 and ARM architectures.
- 4. Docker container should be configurable, so I can configure credentials to connect to web app (portal, API key), and printer.
+ 4. Docker container should be configurable, so I can configure credentials to connect to web app (portal, API Secret), and printer.
  5. I need guide for end user how to install and configure docker container.
  6. I neeed unit test project to test what is developed. In unit test project I would like to mock server API to test everything. 
  
  As fist part, analyze task, create plan subfolder in project, split task into multiple subtasks, for each subtask generate separate text file with prompt, so I can run agent on each subtask.
+ 
+ 
+ 

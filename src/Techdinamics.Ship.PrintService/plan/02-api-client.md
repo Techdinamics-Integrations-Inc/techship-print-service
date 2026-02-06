@@ -44,7 +44,7 @@ public interface ITechshipApiClient
 ### 3. Implement TechshipApiClient
 Create `Services/TechshipApiClient.cs`:
 - Use HttpClient via IHttpClientFactory
-- Implement authentication (username/password or API secret header)
+- Implement authentication (API secret header)
 - Parse XML response from legacy endpoint `Integration/ProcessNextOrderExt`
 - Handle CrossDock variant endpoint `Print/ProcessNextPalletExt`
 - Implement confirmation endpoint call
@@ -55,7 +55,6 @@ Create `Services/TechshipApiClient.cs`:
 Key details from `ProcessingHostViewModel.cs`:
 - Base URL: `https://{portal}`
 - Endpoint: `Integration/ProcessNextOrderExt?clientKey={connectionName}&uid={printerId}`
-- POST with form data: `username={username}&password={password}`
 - If ApiSecret exists, add header: `x-secret-key: {apiSecret}`
 - Response is XML with Order/Pallet element containing label data
 
