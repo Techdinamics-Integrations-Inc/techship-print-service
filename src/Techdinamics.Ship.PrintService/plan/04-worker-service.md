@@ -119,6 +119,17 @@ builder.Services.AddScoped<IPrinterWorker, PrinterWorker>();
 builder.Services.AddHostedService<PrintWorkerManager>();
 ```
 
+### 9. Health & Log Web Page
+- Expose `/` or `/status` endpoint returning a simple HTML page with:
+  - Overall health status (OK/UNHEALTHY)
+  - Detailed per-worker stats
+  - Recent logs (last 100 KB)
+
+### 10. Log Rotation
+- Limit log file size to 100 KB
+- Keep a maximum of 5 log files (rotation)
+- Automatically delete the oldest (6th) file when rotating
+
 ## Acceptance Criteria
 - Service starts and spawns one worker per enabled printer configuration
 - Each worker polls its own API at configured interval independently
@@ -128,3 +139,6 @@ builder.Services.AddHostedService<PrintWorkerManager>();
 - Handles errors in one worker without affecting others
 - Shuts down gracefully on container stop (all workers)
 - Logs all significant events with printer context
+- Health monitoring for Docker: Exposed via files `health.txt` and `health.json` by `HealthMonitor`
+- Web UI: Simple health and log dashboard available via HTTP
+- Log Management: Files are rotated at 100 KB, keeping only 5 most recent files
