@@ -52,3 +52,6 @@ Orders can contain mixed document types:
 - PDF commercial invoices
 - PDF DG declarations
 - Image labels
+
+## Notes
+- App Techdinamics.PrintClient is included to this repo for reference. Use it to check old functionality, but do not update or commit it.  
