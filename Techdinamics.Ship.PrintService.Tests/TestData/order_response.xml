@@ -1,0 +1,9 @@
+<Order>
+    <OrderId>12345</OrderId>
+    <BatchNumber>B-001</BatchNumber>
+    <ClientName>Test Client</ClientName>
+    <CarrierName>Test Carrier</CarrierName>
+    <LabelType>ZPL</LabelType>
+    <LabelData>W1pQTF0gSGVsbG8gV29ybGQ=</LabelData>
+    <PickOrderNumber>PO-123</PickOrderNumber>
+</Order>
