@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  print-service:
+    build: .
+    image: techship-print-service:latest
+    container_name: techship-print-service
+    restart: unless-stopped
+    volumes:
+      - ./config/appsettings.json:/app/appsettings.json:ro
+    network_mode: host  # For printer access
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,21 +1,17 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
-USER $APP_UID
-WORKDIR /app
-
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION=Release
+﻿FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG TARGETARCH
 WORKDIR /src
-COPY ["Techdinamics.Ship.PrintService.csproj", "./"]
-RUN dotnet restore "Techdinamics.Ship.PrintService.csproj"
+COPY Techdinamics.Ship.PrintService.csproj ./
+RUN dotnet restore -a $TARGETARCH
 COPY . .
-WORKDIR "/src/"
-RUN dotnet build "./Techdinamics.Ship.PrintService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet publish Techdinamics.Ship.PrintService.csproj -a $TARGETARCH -c Release -o /app --no-restore
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Techdinamics.Ship.PrintService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/runtime:9.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app .
+
+# Simple file-based health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD test -f health.txt && grep -q "OK" health.txt || exit 1
+
 ENTRYPOINT ["dotnet", "Techdinamics.Ship.PrintService.dll"]
