@@ -76,7 +76,6 @@ public class EndToEndTests : IAsyncLifetime
                             Name = "TestPrinter",
                             Portal = MockServerUrl,
                             ConnectionName = "test-client",
-                            PrinterId = "test-printer-001",
                             ZplConnectionType = PrinterConnectionType.Network,
                             ZplPrinterAddress = "localhost:9100", // Will likely fail if nothing is listening, but we care about the API call
                             PollingIntervalMs = 1000

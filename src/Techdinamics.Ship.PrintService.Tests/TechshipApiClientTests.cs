@@ -28,7 +28,6 @@ public class TechshipApiClientTests
         {
             Portal = "test.techship.io",
             ConnectionName = "test-client",
-            PrinterId = "test-printer",
             ApiSecret = "test-secret"
         };
         _apiClient.Initialize(_config);
@@ -86,6 +85,53 @@ public class TechshipApiClientTests
 
         // Assert
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetNextPrintJobAsync_ReturnsJob_WhenNewXmlFormatProvided()
+    {
+        // Arrange
+        var xmlResponse = @"<Root>
+  <Order>
+    <OrderId>184364498</OrderId>
+    <BatchNumber>COPY_TEST1739234488-COPYA</BatchNumber>
+    <BatchDate>2026-01-28T00:18:28</BatchDate>
+    <ClientName>UNITTEST-FEDEXREST</ClientName>
+    <CarrierName>FedEx (REST)</CarrierName>
+    <PickOrderNumber>TEST1739234488-COPYA-COPY-20260127191828</PickOrderNumber>
+    <CustomerOrderNumber>TESTORDER</CustomerOrderNumber>
+    <Sequence>0</Sequence>
+    <ShipToName>Lucia di Lammermoor</ShipToName>
+    <State>MB</State>
+    <Country>CA</Country>
+  </Order>
+  <Labels>
+    <Label type=""PDF"" purpose=""LABEL"">TGFiZWxEYXRh</Label>
+    <Label type=""PDF"" purpose=""COMMERCIALINVOICE"">UGFja2luZ1NsaXBEYXRh</Label>
+  </Labels>
+</Root>";
+        
+        _mockHttpMessageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(xmlResponse)
+            });
+
+        // Act
+        var result = await _apiClient.GetNextPrintJobAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.RecordId.Should().Be("184364498");
+        result.LabelData.Should().NotBeNull();
+        result.PackingSlipData.Should().NotBeNull();
+        result.LabelType.Should().Be("PDF");
     }
 
     [Fact]
@@ -193,42 +239,4 @@ public class TechshipApiClientTests
         result.Should().BeNull();
     }
 
-    [Fact]
-    public async Task GetNextPrintJobAsync_PropagatesDesktopApiKey()
-    {
-        // Arrange
-        var firstResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent("<Order />")
-        };
-        firstResponse.Headers.Add("set-desktop-api-key", "secret-session-token");
-
-        _mockHttpMessageHandler.Protected()
-            .SetupSequence<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(firstResponse)
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("<Order />")
-            });
-
-        // Act
-        await _apiClient.GetNextPrintJobAsync(); // First call captures key
-        await _apiClient.GetNextPrintJobAsync(); // Second call should send it
-
-        // Assert
-        _mockHttpMessageHandler.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Headers.Contains("x-desktop-api-key") && 
-                req.Headers.GetValues("x-desktop-api-key").Contains("secret-session-token")),
-            ItExpr.IsAny<CancellationToken>()
-        );
-    }
 }

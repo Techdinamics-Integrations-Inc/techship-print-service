@@ -48,7 +48,6 @@ Create `Services/TechshipApiClient.cs`:
 - Parse XML response from legacy endpoint `Integration/ProcessNextOrderExt`
 - Handle CrossDock variant endpoint `Print/ProcessNextPalletExt`
 - Implement confirmation endpoint call
-- Handle API key extraction from response headers (`set-desktop-api-key`)
 - Proper error handling and logging
 
 ### 4. Reference Legacy Implementation

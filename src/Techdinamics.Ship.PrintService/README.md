@@ -38,8 +38,18 @@ Note: The container runs in `privileged` mode to allow CUPS to access local USB 
 
 ## CUPS Management
 
-The service includes a built-in CUPS instance for local/USB printing. You can manage printers via the CUPS web interface at `http://localhost:631` (if running locally) or `http://[container-ip]:631`.
+The service includes a built-in CUPS instance for local/USB and SMB printing. You can manage printers via the CUPS web interface at `http://localhost:631` (if running locally) or `http://[container-ip]:631`.
 
+- **SMB Printers**: To add an SMB printer, use the CUPS web interface. The device URI format is usually `smb://[user:password@]domain/server/printer`.
+- **Credentials**:
+    - **Username**: `admin` (default)
+    - **Password**: `admin` (default)
+- **Changing Credentials**: You can set custom credentials using environment variables in your `docker-compose.yml` or `docker run` command:
+  ```yaml
+  environment:
+    - CUPS_USER=myuser
+    - CUPS_PASSWORD=mypassword
+  ```
 - **Default Configuration**: CUPS is configured to allow remote access.
 - **Persistence**: CUPS configurations and certificates are stored in Docker volumes (`cups-config`, `cups-certs`).
 
@@ -70,6 +80,15 @@ The service is configured via `appsettings.json`. You can define multiple printe
         "PdfPrinterName": "HP_LaserJet_Office",
         "SkipPackingSlips": false,
         "PollingIntervalMs": 5000
+      },
+      {
+        "Enabled": true,
+        "Portal": "https://yourportal.techship.io",
+        "ApiSecret": "your-api-secret-here",
+        "ConnectionName": "smb_printer",
+        "PdfConnectionType": "Local",
+        "PdfPrinterName": "SMB_Printer_Name",
+        "PollingIntervalMs": 2000
       }
     ]
   }

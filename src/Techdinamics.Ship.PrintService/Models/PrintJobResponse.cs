@@ -15,7 +15,17 @@ public class PrintJobResponse
     public string? Country { get; set; }
     
     // Label data
-    public byte[]? LabelData { get; set; }       // ZPL or PDF content
-    public string? LabelType { get; set; }       // "ZPL", "PDF", etc.
-    public byte[]? PackingSlipData { get; set; } // Optional packing slip PDF
+    public List<PrintJobLabel> Labels { get; set; } = new();
+
+    // Compatibility properties (legacy support or simplified access)
+    public byte[]? LabelData => Labels.FirstOrDefault(l => l.Purpose == "LABEL")?.Data;
+    public string? LabelType => Labels.FirstOrDefault(l => l.Purpose == "LABEL")?.Type;
+    public byte[]? PackingSlipData => Labels.FirstOrDefault(l => l.Purpose == "COMMERCIALINVOICE" || l.Purpose == "PACKINGSLIP")?.Data;
+}
+
+public class PrintJobLabel
+{
+    public string? Type { get; set; }    // "PDF", "ZPL", etc.
+    public string? Purpose { get; set; } // "LABEL", "COMMERCIALINVOICE", etc.
+    public byte[]? Data { get; set; }
 }

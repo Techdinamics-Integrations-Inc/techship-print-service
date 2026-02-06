@@ -10,7 +10,6 @@ public class TechshipApiClient : ITechshipApiClient
     private readonly HttpClient _httpClient;
     private readonly ILogger<TechshipApiClient> _logger;
     private PrinterConfiguration? _config;
-    private string? _apiKey;
     private readonly string _printerId = Guid.NewGuid().ToString();
 
     public TechshipApiClient(HttpClient httpClient, ILogger<TechshipApiClient> logger)
@@ -43,19 +42,8 @@ public class TechshipApiClient : ITechshipApiClient
                 request.Headers.Add("x-secret-key", _config.ApiSecret);
             }
 
-            if (!string.IsNullOrEmpty(_apiKey))
-            {
-                request.Headers.Add("x-desktop-api-key", _apiKey);
-            }
-
             var response = await _httpClient.SendAsync(request, ct);
             response.EnsureSuccessStatusCode();
-
-            // Extract API key if present
-            if (response.Headers.TryGetValues("set-desktop-api-key", out var values))
-            {
-                _apiKey = values.FirstOrDefault();
-            }
 
             var xmlContent = await response.Content.ReadAsStringAsync(ct);
             if (string.IsNullOrWhiteSpace(xmlContent)) return null;
@@ -84,10 +72,6 @@ public class TechshipApiClient : ITechshipApiClient
             {
                 request.Headers.Add("x-secret-key", _config.ApiSecret);
             }
-            if (!string.IsNullOrEmpty(_apiKey))
-            {
-                request.Headers.Add("x-desktop-api-key", _apiKey);
-            }
 
             var response = await _httpClient.SendAsync(request, ct);
             response.EnsureSuccessStatusCode();
@@ -111,37 +95,76 @@ public class TechshipApiClient : ITechshipApiClient
                 return null;
             }
 
-            // The legacy XML could be <Order> or <Pallet>
+            XElement? orderElement;
+            if (root.Name.LocalName == "Root")
+            {
+                orderElement = root.Element("Order") ?? root.Element("Pallet");
+            }
+            else
+            {
+                orderElement = root;
+            }
+
+            if (orderElement == null) return null;
+
             var result = new PrintJobResponse
             {
-                RecordId = root.Element("OrderId")?.Value ?? root.Element("PalletId")?.Value,
-                BatchNumber = root.Element("BatchNumber")?.Value,
-                ClientName = root.Element("ClientName")?.Value,
-                CarrierName = root.Element("CarrierName")?.Value,
-                PickOrderNumber = root.Element("PickOrderNumber")?.Value,
-                CustomerOrderNumber = root.Element("CustomerOrderNumber")?.Value,
-                Sequence = root.Element("Sequence")?.Value,
-                ShipToName = root.Element("ShipToName")?.Value,
-                State = root.Element("State")?.Value,
-                Country = root.Element("Country")?.Value,
-                LabelType = root.Element("LabelType")?.Value ?? "ZPL"
+                RecordId = orderElement.Element("OrderId")?.Value ?? orderElement.Element("PalletId")?.Value,
+                BatchNumber = orderElement.Element("BatchNumber")?.Value,
+                ClientName = orderElement.Element("ClientName")?.Value,
+                CarrierName = orderElement.Element("CarrierName")?.Value,
+                PickOrderNumber = orderElement.Element("PickOrderNumber")?.Value,
+                CustomerOrderNumber = orderElement.Element("CustomerOrderNumber")?.Value,
+                Sequence = orderElement.Element("Sequence")?.Value,
+                ShipToName = orderElement.Element("ShipToName")?.Value,
+                State = orderElement.Element("State")?.Value,
+                Country = orderElement.Element("Country")?.Value,
             };
 
-            if (DateTime.TryParse(root.Element("BatchDate")?.Value, out var batchDate))
+            if (DateTime.TryParse(orderElement.Element("BatchDate")?.Value, out var batchDate))
             {
                 result.BatchDate = batchDate;
             }
 
-            var labelDataBase64 = root.Element("LabelData")?.Value;
-            if (!string.IsNullOrEmpty(labelDataBase64))
+            // Parse Labels
+            var labelsElement = root.Element("Labels");
+            if (labelsElement != null)
             {
-                result.LabelData = Convert.FromBase64String(labelDataBase64);
+                foreach (var labelElement in labelsElement.Elements("Label"))
+                {
+                    var label = new PrintJobLabel
+                    {
+                        Type = labelElement.Attribute("type")?.Value,
+                        Purpose = labelElement.Attribute("purpose")?.Value,
+                        Data = !string.IsNullOrEmpty(labelElement.Value) ? Convert.FromBase64String(labelElement.Value) : null
+                    };
+                    result.Labels.Add(label);
+                }
             }
-
-            var packingSlipDataBase64 = root.Element("PackingSlipData")?.Value;
-            if (!string.IsNullOrEmpty(packingSlipDataBase64))
+            else
             {
-                result.PackingSlipData = Convert.FromBase64String(packingSlipDataBase64);
+                // Fallback to legacy single label format if <Labels> is missing
+                var labelDataBase64 = orderElement.Element("LabelData")?.Value;
+                if (!string.IsNullOrEmpty(labelDataBase64))
+                {
+                    result.Labels.Add(new PrintJobLabel
+                    {
+                        Type = orderElement.Element("LabelType")?.Value ?? "ZPL",
+                        Purpose = "LABEL",
+                        Data = Convert.FromBase64String(labelDataBase64)
+                    });
+                }
+
+                var packingSlipDataBase64 = orderElement.Element("PackingSlipData")?.Value;
+                if (!string.IsNullOrEmpty(packingSlipDataBase64))
+                {
+                    result.Labels.Add(new PrintJobLabel
+                    {
+                        Type = "PDF",
+                        Purpose = "COMMERCIALINVOICE",
+                        Data = Convert.FromBase64String(packingSlipDataBase64)
+                    });
+                }
             }
 
             return result.RecordId != null ? result : null;

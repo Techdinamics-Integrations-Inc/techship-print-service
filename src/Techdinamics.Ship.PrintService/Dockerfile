@@ -12,13 +12,21 @@ WORKDIR /app
 # Install CUPS and dependencies
 RUN apt-get update && apt-get install -y \
     cups \
+    cups-browsed \
+    avahi-daemon \
+    dbus \
     libcups2 \
+    smbclient \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure CUPS to allow remote access (optional but often helpful for management)
+# Configure CUPS to allow remote access
+# Minimal configuration in Dockerfile, entrypoint.sh will do the heavy lifting
 RUN sed -i 's/Listen localhost:631/Listen 0.0.0.0:631/' /etc/cups/cupsd.conf && \
-    sed -i 's/<Location \/>/<Location \/>\n  Allow All/' /etc/cups/cupsd.conf && \
-    sed -i 's/<Location \/admin>/<Location \/admin>\n  Allow All/' /etc/cups/cupsd.conf
+    sed -i 's/WebInterface No/WebInterface Yes/' /etc/cups/cupsd.conf && \
+    echo "DefaultEncryption Never" >> /etc/cups/cupsd.conf && \
+    echo "ServerAlias *" >> /etc/cups/cupsd.conf && \
+    echo "DefaultAuthType Basic" >> /etc/cups/cupsd.conf && \
+    sed -i 's/^SystemGroup .*/SystemGroup lpadmin/' /etc/cups/cupsd.conf || echo "SystemGroup lpadmin" >> /etc/cups/cupsd.conf
 
 COPY --from=build /app .
 COPY entrypoint.sh .

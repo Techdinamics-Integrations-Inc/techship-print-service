@@ -36,10 +36,9 @@ public class PrinterWorkerTests
         var cts = new CancellationTokenSource();
         var job = new PrintJobResponse
         {
-            RecordId = "JOB1",
-            LabelData = new byte[] { 1, 2, 3 },
-            LabelType = "ZPL"
+            RecordId = "JOB1"
         };
+        job.Labels.Add(new PrintJobLabel { Purpose = "LABEL", Type = "ZPL", Data = new byte[] { 1, 2, 3 } });
 
         _mockApiClient.Setup(x => x.GetNextPrintJobAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);
@@ -64,10 +63,9 @@ public class PrinterWorkerTests
         var cts = new CancellationTokenSource();
         var job = new PrintJobResponse
         {
-            RecordId = "JOB1",
-            LabelData = new byte[] { 1, 2, 3 },
-            LabelType = "ZPL"
+            RecordId = "JOB1"
         };
+        job.Labels.Add(new PrintJobLabel { Purpose = "LABEL", Type = "ZPL", Data = new byte[] { 1, 2, 3 } });
 
         _mockApiClient.Setup(x => x.GetNextPrintJobAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);

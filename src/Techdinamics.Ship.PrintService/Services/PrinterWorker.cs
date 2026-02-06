@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Techdinamics.Ship.PrintService.Helpers;
 using Techdinamics.Ship.PrintService.Models;
@@ -14,6 +15,7 @@ public class PrinterWorker : IPrinterWorker
     private int _successCount;
     private int _failureCount;
     private string _printerName = string.Empty;
+    private BlockingCollection<PrintJobResponse>? _jobQueue;
 
     public PrinterWorker(
         ITechshipApiClient apiClient,
@@ -41,50 +43,77 @@ public class PrinterWorker : IPrinterWorker
     public async Task RunAsync(PrinterConfiguration config, CancellationToken ct)
     {
         _printerName = config.ConnectionName;
-        _logger.LogInformation("Worker started for printer: {ConnectionName} (Portal: {Portal})", 
-            config.ConnectionName, config.Portal);
+        _logger.LogInformation("Worker started for printer: {ConnectionName} (Portal: {Portal}) with queue size {MaxQueueSize}", 
+            config.ConnectionName, config.Portal, config.MaxQueueSize);
         
         _apiClient.Initialize(config);
+        _jobQueue = new BlockingCollection<PrintJobResponse>(config.MaxQueueSize);
 
-        while (!ct.IsCancellationRequested)
+        // Start the consumer task
+        var consumerTask = Task.Run(() => ProcessQueueAsync(config, ct), ct);
+
+        try
         {
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    var job = await _apiClient.GetNextPrintJobAsync(ct);
+                    if (job != null)
+                    {
+                        _logger.LogInformation("Job {RecordId} received, adding to queue", job.RecordId);
+                        _jobQueue.Add(job, ct);
+                        _lastSuccessfulPoll = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        _lastSuccessfulPoll = DateTime.UtcNow;
+                        await Task.Delay(config.PollingIntervalMs, ct);
+                    }
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    // Normal shutdown
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in worker {ConnectionName} while polling jobs", config.ConnectionName);
+                    await Task.Delay(config.PollingIntervalMs, ct);
+                }
+            }
+        }
+        finally
+        {
+            _jobQueue.CompleteAdding();
             try
             {
-                await ProcessNextJobAsync(config, ct);
-                _lastSuccessfulPoll = DateTime.UtcNow;
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                // Normal shutdown
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in worker {ConnectionName} while processing jobs", config.ConnectionName);
-            }
-
-            try 
-            {
-                await Task.Delay(config.PollingIntervalMs, ct);
+                await consumerTask;
             }
             catch (OperationCanceledException)
             {
                 // Normal shutdown
             }
+            _jobQueue.Dispose();
         }
 
         _logger.LogInformation("Worker stopped for printer: {ConnectionName}. Success: {SuccessCount}, Failures: {FailureCount}", 
             config.ConnectionName, _successCount, _failureCount);
     }
 
-    private async Task ProcessNextJobAsync(PrinterConfiguration config, CancellationToken ct)
+    private async Task ProcessQueueAsync(PrinterConfiguration config, CancellationToken ct)
     {
-        // 1. Poll for job
-        var job = await _apiClient.GetNextPrintJobAsync(ct);
-        if (job == null)
+        _logger.LogInformation("Consumer started for printer: {ConnectionName}", config.ConnectionName);
+        
+        foreach (var job in _jobQueue!.GetConsumingEnumerable(ct))
         {
-            return;
+            await ProcessJobInternalAsync(job, config, ct);
         }
+        
+        _logger.LogInformation("Consumer stopped for printer: {ConnectionName}", config.ConnectionName);
+    }
 
+    private async Task ProcessJobInternalAsync(PrintJobResponse job, PrinterConfiguration config, CancellationToken ct)
+    {
         _logger.LogInformation("Processing job {RecordId} for client {ClientName} on printer {ConnectionName}", 
             job.RecordId, job.ClientName, config.ConnectionName);
 
