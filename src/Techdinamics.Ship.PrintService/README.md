@@ -34,6 +34,15 @@ Run the following command in the directory containing `docker-compose.yml`:
 docker-compose up -d
 ```
 
+Note: The container runs in `privileged` mode to allow CUPS to access local USB printers.
+
+## CUPS Management
+
+The service includes a built-in CUPS instance for local/USB printing. You can manage printers via the CUPS web interface at `http://localhost:631` (if running locally) or `http://[container-ip]:631`.
+
+- **Default Configuration**: CUPS is configured to allow remote access.
+- **Persistence**: CUPS configurations and certificates are stored in Docker volumes (`cups-config`, `cups-certs`).
+
 ## Configuration
 
 The service is configured via `appsettings.json`. You can define multiple printer configurations in the `Printers` array.
@@ -44,23 +53,19 @@ The service is configured via `appsettings.json`. You can define multiple printe
   "PrintService": {
     "Printers": [
       {
-        "Name": "Warehouse-A-ZPL",
         "Enabled": true,
         "Portal": "https://yourportal.techship.io",
         "ApiSecret": "your-api-secret-here",
         "ConnectionName": "warehouse_a",
-        "PrinterId": "zpl-01",
         "ZplConnectionType": "Network",
         "ZplPrinterAddress": "192.168.1.100:9100",
         "PollingIntervalMs": 2000
       },
       {
-        "Name": "Office-PDF",
         "Enabled": true,
         "Portal": "https://yourportal.techship.io",
         "ApiSecret": "your-api-secret-here",
         "ConnectionName": "office",
-        "PrinterId": "pdf-01",
         "PdfConnectionType": "Local",
         "PdfPrinterName": "HP_LaserJet_Office",
         "SkipPackingSlips": false,
@@ -75,12 +80,10 @@ The service is configured via `appsettings.json`. You can define multiple printe
 
 | Property | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `Name` | Friendly name for logging | No | - |
 | `Enabled` | Enable/disable this printer worker | No | `true` |
 | `Portal` | Techship portal URL (e.g., `https://example.techship.io`) | Yes | - |
 | `ApiSecret` | API Secret (x-secret-key) for authentication | Yes | - |
-| `ConnectionName`| Connection Name (client key) | Yes | - |
-| `PrinterId` | Unique ID for this printer in the portal | Yes | - |
+| `ConnectionName`| Connection Name (client key). Used for logging as well. | Yes | - |
 | `ZplConnectionType` | `Network` or `Local` | No | `Network` |
 | `ZplPrinterAddress` | IP:Port for network ZPL printers (e.g., `192.168.1.10:9100`) | Yes* | - |
 | `ZplPrinterName` | System printer name for local ZPL | Yes* | - |
@@ -88,7 +91,6 @@ The service is configured via `appsettings.json`. You can define multiple printe
 | `PdfPrinterName` | System printer name for PDF printing | Yes** | - |
 | `PollingIntervalMs`| Interval between polling requests | No | `2000` |
 | `SkipPackingSlips` | If true, packing slips will be ignored | No | `false` |
-| `UsePalletEndpoint`| Use CrossDock variant pallet endpoint | No | `false` |
 
 *\* Required if printing ZPL labels.*
 *\*\* Required if printing PDF documents.*
@@ -101,11 +103,9 @@ For simple single-printer setups:
 docker run -d \
   --name techship-print-service \
   --restart unless-stopped \
-  -e PrintService__Printers__0__Name=MyPrinter \
   -e PrintService__Printers__0__Portal=https://yourportal.techship.io \
   -e PrintService__Printers__0__ApiSecret=your_secret \
   -e PrintService__Printers__0__ConnectionName=client_key \
-  -e PrintService__Printers__0__PrinterId=printer_01 \
   -e PrintService__Printers__0__ZplPrinterAddress=192.168.1.100:9100 \
   techship-print-service:latest
 ```
@@ -128,7 +128,7 @@ docker logs techship-print-service
 
 ### Common Issues
 - **Connection Failed**: Ensure the container has network access to the portal and the printer IP.
-- **Authentication Error**: Verify `ApiSecret` and `ConnectionName`. Note that Username/Password authentication is deprecated.
+- **Authentication Error**: Verify `ApiSecret` and `ConnectionName`.
 - **Printer Offline**: For network printers, try `telnet [IP] 9100` from the host to verify connectivity.
 - **CUPS/Local Printers**: Ensure the printer is correctly installed in the host's CUPS and shared if necessary.
 

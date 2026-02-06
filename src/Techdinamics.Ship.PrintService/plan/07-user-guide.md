@@ -40,8 +40,7 @@ docker run -d \
   -e PrintService__Printers__0__Name=MyPrinter \
   -e PrintService__Printers__0__Enabled=true \
   -e PrintService__Printers__0__Portal=techship.example.com \
-  -e PrintService__Printers__0__Username=your_username \
-  -e PrintService__Printers__0__Password=your_password \
+  -e PrintService__Printers__0__ApiSecret=your_api_secret \
   -e PrintService__Printers__0__ConnectionName=your_client_key \
   -e PrintService__Printers__0__PrinterId=unique_id \
   -e PrintService__Printers__0__ZplPrinterAddress=192.168.1.100:9100 \
@@ -68,8 +67,7 @@ Example `config/appsettings.json` for multiple printers:
         "Name": "Warehouse-A-Labels",
         "Enabled": true,
         "Portal": "techship.example.com",
-        "Username": "warehouse_a",
-        "Password": "secret1",
+        "ApiSecret": "secret1",
         "ConnectionName": "client_warehouse_a",
         "PrinterId": "printer-a-001",
         "ZplPrinterAddress": "192.168.1.100:9100",
@@ -79,8 +77,7 @@ Example `config/appsettings.json` for multiple printers:
         "Name": "Warehouse-B-Labels",
         "Enabled": true,
         "Portal": "techship.example.com",
-        "Username": "warehouse_b",
-        "Password": "secret2",
+        "ApiSecret": "secret2",
         "ConnectionName": "client_warehouse_b",
         "PrinterId": "printer-b-001",
         "ZplPrinterAddress": "192.168.1.101:9100",
@@ -90,7 +87,6 @@ Example `config/appsettings.json` for multiple printers:
         "Name": "Office-PackingSlips",
         "Enabled": true,
         "Portal": "techship2.example.com",
-        "Username": "office_user",
         "ApiSecret": "api-key-here",
         "ConnectionName": "office_client",
         "PrinterId": "office-pdf-001",
@@ -108,17 +104,14 @@ Example `config/appsettings.json` for multiple printers:
 | Name | Friendly name for logging | No | - |
 | Enabled | Enable/disable this printer | No | true |
 | Portal | Techship portal hostname | Yes | - |
-| Username | Portal login username | Yes | - |
-| Password | Portal login password | Yes* | - |
-| ApiSecret | API secret (alternative to password) | Yes* | - |
+| ApiSecret | API secret for authentication | Yes | - |
 | ConnectionName | Client key from portal | Yes | - |
 | PrinterId | Unique identifier for this printer | Yes | - |
 | ZplPrinterAddress | Thermal printer IP:port | Yes** | - |
 | PdfPrinterName | PDF printer name | Yes** | - |
 | PollingIntervalMs | Poll interval in milliseconds | No | 2000 |
 
-*Either Password or ApiSecret required
-**Either ZplPrinterAddress or PdfPrinterName required depending on print type
+*Either ZplPrinterAddress or PdfPrinterName required depending on print type
 
 ### 6. Printer Setup Guide
 - How to find printer IP address

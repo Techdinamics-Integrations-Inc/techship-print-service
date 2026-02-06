@@ -17,7 +17,7 @@ public class PrintService : IPrintService
 
     public async Task PrintZplAsync(byte[] zplData, PrinterConfiguration config, CancellationToken ct = default)
     {
-        _logger.LogInformation("Printing ZPL for {ConfigName} (Type: {Type})", config.Name, config.ZplConnectionType);
+        _logger.LogInformation("Printing ZPL for {ConnectionName} (Type: {Type})", config.ConnectionName, config.ZplConnectionType);
 
         switch (config.ZplConnectionType)
         {
@@ -35,8 +35,8 @@ public class PrintService : IPrintService
     public async Task PrintPdfAsync(byte[] pdfData, PrinterConfiguration config, bool isThermalLabel = false, CancellationToken ct = default)
     {
         var printerName = isThermalLabel ? config.ThermalPdfPrinterName : config.PdfPrinterName;
-        _logger.LogInformation("Printing PDF for {ConfigName} (Type: {Type}, Printer: {Printer})", 
-            config.Name, config.PdfConnectionType, printerName);
+        _logger.LogInformation("Printing PDF for {ConnectionName} (Type: {Type}, Printer: {Printer})", 
+            config.ConnectionName, config.PdfConnectionType, printerName);
 
         switch (config.PdfConnectionType)
         {
@@ -56,7 +56,7 @@ public class PrintService : IPrintService
 
     public async Task PrintRawAsync(byte[] rawData, PrinterConfiguration config, CancellationToken ct = default)
     {
-        _logger.LogInformation("Printing Raw data for {ConfigName}", config.Name);
+        _logger.LogInformation("Printing Raw data for {ConnectionName}", config.ConnectionName);
         // Defaulting to ZPL settings for raw if not specified, or just using a general approach
         if (!string.IsNullOrEmpty(config.ZplPrinterAddress) && config.ZplConnectionType == PrinterConnectionType.Network)
         {

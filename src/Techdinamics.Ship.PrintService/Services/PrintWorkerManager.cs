@@ -47,9 +47,9 @@ public class PrintWorkerManager : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var worker = scope.ServiceProvider.GetRequiredService<IPrinterWorker>();
             
-            if (!_activeWorkers.TryAdd(printer.Name, worker))
+            if (!_activeWorkers.TryAdd(printer.ConnectionName, worker))
             {
-                _logger.LogWarning("Worker for printer {Name} already exists", printer.Name);
+                _logger.LogWarning("Worker for printer {ConnectionName} already exists", printer.ConnectionName);
             }
 
             try
@@ -58,12 +58,12 @@ public class PrintWorkerManager : BackgroundService
             }
             finally
             {
-                _activeWorkers.TryRemove(printer.Name, out _);
+                _activeWorkers.TryRemove(printer.ConnectionName, out _);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(ex, "Fatal error in worker manager for printer: {Name}", printer.Name);
+            _logger.LogCritical(ex, "Fatal error in worker manager for printer: {ConnectionName}", printer.ConnectionName);
         }
     }
 }

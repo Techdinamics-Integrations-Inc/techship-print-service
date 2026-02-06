@@ -11,6 +11,7 @@ public class TechshipApiClient : ITechshipApiClient
     private readonly ILogger<TechshipApiClient> _logger;
     private PrinterConfiguration? _config;
     private string? _apiKey;
+    private readonly string _printerId = Guid.NewGuid().ToString();
 
     public TechshipApiClient(HttpClient httpClient, ILogger<TechshipApiClient> logger)
     {
@@ -32,10 +33,8 @@ public class TechshipApiClient : ITechshipApiClient
 
         try
         {
-            var endpoint = _config.UsePalletEndpoint
-                ? "Print/ProcessNextPalletExt"
-                : "Integration/ProcessNextOrderExt";
-            var url = $"{endpoint}?clientKey={Uri.EscapeDataString(_config.ConnectionName)}&uid={Uri.EscapeDataString(_config.PrinterId)}";
+            var endpoint = "Integration/ProcessNextOrderExt";
+            var url = $"{endpoint}?clientKey={Uri.EscapeDataString(_config.ConnectionName)}&uid={Uri.EscapeDataString(_printerId)}";
             
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             

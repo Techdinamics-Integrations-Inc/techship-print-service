@@ -51,8 +51,7 @@ Alternative using indexed environment variables:
       - PrintService__Printers__0__Name=Warehouse1
       - PrintService__Printers__0__Enabled=true
       - PrintService__Printers__0__Portal=techship.example.com
-      - PrintService__Printers__0__Username=user1
-      - PrintService__Printers__0__Password=pass1
+      - PrintService__Printers__0__ApiSecret=secret1
       - PrintService__Printers__0__ConnectionName=client1
       - PrintService__Printers__0__PrinterId=printer1
       - PrintService__Printers__0__ZplPrinterAddress=192.168.1.100:9100
@@ -60,8 +59,7 @@ Alternative using indexed environment variables:
       - PrintService__Printers__1__Name=Warehouse2
       - PrintService__Printers__1__Enabled=true
       - PrintService__Printers__1__Portal=techship.example.com
-      - PrintService__Printers__1__Username=user2
-      - PrintService__Printers__1__Password=pass2
+      - PrintService__Printers__1__ApiSecret=secret2
       - PrintService__Printers__1__ConnectionName=client2
       - PrintService__Printers__1__PrinterId=printer2
       - PrintService__Printers__1__ZplPrinterAddress=192.168.1.101:9100
@@ -77,8 +75,6 @@ Template for multi-printer configuration:
         "Name": "Warehouse1-ZPL",
         "Enabled": true,
         "Portal": "techship.example.com",
-        "Username": "your_username",
-        "Password": "your_password",
         "ApiSecret": "",
         "ConnectionName": "your_client_key",
         "PrinterId": "unique_printer_id_1",
@@ -89,8 +85,6 @@ Template for multi-printer configuration:
         "Name": "Warehouse2-PDF",
         "Enabled": true,
         "Portal": "techship2.example.com",
-        "Username": "another_user",
-        "Password": "another_pass",
         "ConnectionName": "another_client_key",
         "PrinterId": "unique_printer_id_2",
         "PdfPrinterName": "network-pdf-printer",

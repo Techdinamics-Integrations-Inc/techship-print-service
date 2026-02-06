@@ -50,7 +50,6 @@ public class PrintJobStore
 ```csharp
 app.MapPost("/Integration/ProcessNextOrderExt", async (HttpContext ctx, PrintJobStore store) =>
 {
-    // Parse form data: username, password
     // Check x-secret-key header for API secret
     // Return XML response matching legacy format
     var clientKey = ctx.Request.Query["clientKey"];

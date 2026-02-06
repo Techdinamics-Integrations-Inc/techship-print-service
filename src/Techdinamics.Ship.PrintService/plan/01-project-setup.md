@@ -27,9 +27,7 @@ public class PrinterConfiguration
     public string Name { get; set; }             // Friendly name for logging
     public bool Enabled { get; set; } = true;
     public string Portal { get; set; }           // e.g., "techship.example.com"
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public string ApiSecret { get; set; }        // Alternative to password
+    public string ApiSecret { get; set; }        // Primary auth
     public string ConnectionName { get; set; }   // Client key
     public string PrinterId { get; set; }        // Unique printer identifier
     

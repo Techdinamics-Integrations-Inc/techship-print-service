@@ -40,9 +40,9 @@ public class PrinterWorker : IPrinterWorker
 
     public async Task RunAsync(PrinterConfiguration config, CancellationToken ct)
     {
-        _printerName = config.Name;
-        _logger.LogInformation("Worker started for printer: {Name} (Portal: {Portal}, PrinterId: {PrinterId})", 
-            config.Name, config.Portal, config.PrinterId);
+        _printerName = config.ConnectionName;
+        _logger.LogInformation("Worker started for printer: {ConnectionName} (Portal: {Portal})", 
+            config.ConnectionName, config.Portal);
         
         _apiClient.Initialize(config);
 
@@ -59,7 +59,7 @@ public class PrinterWorker : IPrinterWorker
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in worker {Name} while processing jobs", config.Name);
+                _logger.LogError(ex, "Error in worker {ConnectionName} while processing jobs", config.ConnectionName);
             }
 
             try 
@@ -72,8 +72,8 @@ public class PrinterWorker : IPrinterWorker
             }
         }
 
-        _logger.LogInformation("Worker stopped for printer: {Name}. Success: {SuccessCount}, Failures: {FailureCount}", 
-            config.Name, _successCount, _failureCount);
+        _logger.LogInformation("Worker stopped for printer: {ConnectionName}. Success: {SuccessCount}, Failures: {FailureCount}", 
+            config.ConnectionName, _successCount, _failureCount);
     }
 
     private async Task ProcessNextJobAsync(PrinterConfiguration config, CancellationToken ct)
@@ -85,8 +85,8 @@ public class PrinterWorker : IPrinterWorker
             return;
         }
 
-        _logger.LogInformation("Processing job {RecordId} for client {ClientName} on printer {Name}", 
-            job.RecordId, job.ClientName, config.Name);
+        _logger.LogInformation("Processing job {RecordId} for client {ClientName} on printer {ConnectionName}", 
+            job.RecordId, job.ClientName, config.ConnectionName);
 
         try
         {
@@ -140,7 +140,7 @@ public class PrinterWorker : IPrinterWorker
         catch (Exception ex)
         {
             _failureCount++;
-            _logger.LogError(ex, "Failed to process job {RecordId} for printer {Name} after retries", job.RecordId, config.Name);
+            _logger.LogError(ex, "Failed to process job {RecordId} for printer {ConnectionName} after retries", job.RecordId, config.ConnectionName);
             // We don't confirm if it failed, so it might be retried or stay in queue depending on portal logic
         }
     }

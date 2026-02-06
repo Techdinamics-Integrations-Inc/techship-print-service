@@ -7,9 +7,16 @@ services:
     restart: unless-stopped
     volumes:
       - ./config/appsettings.json:/app/appsettings.json:ro
+      - cups-config:/etc/cups
+      - cups-certs:/etc/cups/ssl
     network_mode: host  # For printer access
+    privileged: true    # Often needed for USB printer access
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  cups-config:
+  cups-certs:

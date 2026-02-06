@@ -7,12 +7,10 @@ public enum PrinterConnectionType { Network, Local }
 /// </summary>
 public class PrinterConfiguration
 {
-    public string Name { get; set; } = string.Empty;             // Friendly name for logging
     public bool Enabled { get; set; } = true;
     public string Portal { get; set; } = string.Empty;           // e.g., "techship.example.com"
     public string ApiSecret { get; set; } = string.Empty;        // Primary auth
     public string ConnectionName { get; set; } = string.Empty;   // Client key
-    public string PrinterId { get; set; } = string.Empty;        // Unique printer identifier
     
     // ZPL Printer settings
     public PrinterConnectionType ZplConnectionType { get; set; } = PrinterConnectionType.Network;
@@ -28,7 +26,4 @@ public class PrinterConfiguration
     // Other settings
     public int PollingIntervalMs { get; set; } = 2000;
     public bool SkipPackingSlips { get; set; } = false;
-
-    // CrossDock variant support
-    public bool UsePalletEndpoint { get; set; } = false;
 }

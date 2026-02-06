@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService", "Techdinamics.Ship.PrintService.csproj", "{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.PrintClient", "..\Techdinamics.PrintClient\Techdinamics.PrintClient.csproj", "{FF26B511-D218-445B-9413-60FD55D60089}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.Tests", "..\Techdinamics.Ship.PrintService.Tests\Techdinamics.Ship.PrintService.Tests.csproj", "{16107F82-7BB4-40AF-AF26-C56B247FFF2B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.MockServer", "..\Techdinamics.Ship.PrintService.MockServer\Techdinamics.Ship.PrintService.MockServer.csproj", "{FAEB369D-2925-4255-B800-08DE84E11928}"
@@ -30,18 +28,6 @@ Global
 		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Release|x64.Build.0 = Release|Any CPU
 		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Release|x86.ActiveCfg = Release|Any CPU
 		{6C29CCBC-E407-4ACA-B8C5-482C552C95FD}.Release|x86.Build.0 = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|x64.Build.0 = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Debug|x86.Build.0 = Debug|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|x64.ActiveCfg = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|x64.Build.0 = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|x86.ActiveCfg = Release|Any CPU
-		{FF26B511-D218-445B-9413-60FD55D60089}.Release|x86.Build.0 = Release|Any CPU
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Debug|x64.ActiveCfg = Debug|Any CPU
