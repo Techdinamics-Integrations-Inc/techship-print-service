@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.PrintClient", "..\Techdinamics.PrintClient\Techdinamics.PrintClient.csproj", "{FF26B511-D218-445B-9413-60FD55D60089}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.Tests", "..\..\Techdinamics.Ship.PrintService.Tests\Techdinamics.Ship.PrintService.Tests.csproj", "{16107F82-7BB4-40AF-AF26-C56B247FFF2B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.Tests", "..\Techdinamics.Ship.PrintService.Tests\Techdinamics.Ship.PrintService.Tests.csproj", "{16107F82-7BB4-40AF-AF26-C56B247FFF2B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.MockServer", "..\Techdinamics.Ship.PrintService.MockServer\Techdinamics.Ship.PrintService.MockServer.csproj", "{FAEB369D-2925-4255-B800-08DE84E11928}"
 EndProject
