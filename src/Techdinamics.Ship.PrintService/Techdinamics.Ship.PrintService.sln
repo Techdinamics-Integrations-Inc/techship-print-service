@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.PrintClient", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.Tests", "..\..\Techdinamics.Ship.PrintService.Tests\Techdinamics.Ship.PrintService.Tests.csproj", "{16107F82-7BB4-40AF-AF26-C56B247FFF2B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Techdinamics.Ship.PrintService.MockServer", "..\Techdinamics.Ship.PrintService.MockServer\Techdinamics.Ship.PrintService.MockServer.csproj", "{FAEB369D-2925-4255-B800-08DE84E11928}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,18 @@ Global
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Release|x64.Build.0 = Release|Any CPU
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Release|x86.ActiveCfg = Release|Any CPU
 		{16107F82-7BB4-40AF-AF26-C56B247FFF2B}.Release|x86.Build.0 = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|x64.Build.0 = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Debug|x86.Build.0 = Debug|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|x64.ActiveCfg = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|x64.Build.0 = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|x86.ActiveCfg = Release|Any CPU
+		{FAEB369D-2925-4255-B800-08DE84E11928}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mock-server:
+    build:
+      context: ../Techdinamics.Ship.PrintService.MockServer
+    ports:
+      - "5080:8080"
+    volumes:
+      - ../Techdinamics.Ship.PrintService.MockServer/TestData:/app/TestData:ro
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+
+  print-service:
+    build:
+      context: .
+    depends_on:
+      - mock-server
+    environment:
+      - PrintService__Printers__0__Name=TestPrinter
+      - PrintService__Printers__0__Portal=http://mock-server:8080
+      - PrintService__Printers__0__ConnectionName=test-client
+      - PrintService__Printers__0__PrinterId=test-printer-001
+      - PrintService__Printers__0__ZplConnectionType=Network
+      - PrintService__Printers__0__ZplPrinterAddress=mock-printer:9100
+      - PrintService__Printers__0__PdfConnectionType=Local
+      - PrintService__Printers__0__PdfPrinterName=Virtual_PDF_Printer
