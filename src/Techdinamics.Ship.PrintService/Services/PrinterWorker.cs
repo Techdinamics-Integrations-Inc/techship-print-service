@@ -46,6 +46,8 @@ public class PrinterWorker : IPrinterWorker
         _logger.LogInformation("Worker started for printer: {ConnectionName} (Portal: {Portal}) with queue size {MaxQueueSize}", 
             config.ConnectionName, config.Portal, config.MaxQueueSize);
         
+        ValidateConfiguration(config);
+        
         _apiClient.Initialize(config);
         _jobQueue = new BlockingCollection<PrintJobResponse>(config.MaxQueueSize);
 
@@ -61,13 +63,21 @@ public class PrinterWorker : IPrinterWorker
                     var job = await _apiClient.GetNextPrintJobAsync(ct);
                     if (job != null)
                     {
-                        _logger.LogInformation("Job {RecordId} received, adding to queue", job.RecordId);
+                        _logger.LogInformation("Job {RecordId} received, confirming and adding to queue", job.RecordId);
+                        
+                        // Confirm immediately after receiving and parsing correctly
+                        if (!string.IsNullOrEmpty(job.RecordId))
+                        {
+                            await _apiClient.ConfirmPrintAsync(job.RecordId, ct);
+                        }
+                        
                         _jobQueue.Add(job, ct);
                         _lastSuccessfulPoll = DateTime.UtcNow;
                     }
                     else
                     {
                         _lastSuccessfulPoll = DateTime.UtcNow;
+                        // Delay only if no job found
                         await Task.Delay(config.PollingIntervalMs, ct);
                     }
                 }
@@ -100,6 +110,29 @@ public class PrinterWorker : IPrinterWorker
             config.ConnectionName, _successCount, _failureCount);
     }
 
+    private void ValidateConfiguration(PrinterConfiguration config)
+    {
+        if (config.PdfConnectionType == PrinterConnectionType.Local && string.IsNullOrEmpty(config.PdfPrinterName))
+        {
+            _logger.LogWarning("Printer {ConnectionName} is configured for Local PDF printing but PdfPrinterName is empty.", config.ConnectionName);
+        }
+        
+        if (config.ZplConnectionType == PrinterConnectionType.Local && string.IsNullOrEmpty(config.ZplPrinterName))
+        {
+            _logger.LogWarning("Printer {ConnectionName} is configured for Local ZPL printing but ZplPrinterName is empty.", config.ConnectionName);
+        }
+
+        if (config.PdfConnectionType == PrinterConnectionType.Network && string.IsNullOrEmpty(config.PdfPrinterAddress))
+        {
+            _logger.LogError("Printer {ConnectionName} is configured for Network PDF printing but PdfPrinterAddress is empty.", config.ConnectionName);
+        }
+
+        if (config.ZplConnectionType == PrinterConnectionType.Network && string.IsNullOrEmpty(config.ZplPrinterAddress))
+        {
+            _logger.LogError("Printer {ConnectionName} is configured for Network ZPL printing but ZplPrinterAddress is empty.", config.ConnectionName);
+        }
+    }
+
     private async Task ProcessQueueAsync(PrinterConfiguration config, CancellationToken ct)
     {
         _logger.LogInformation("Consumer started for printer: {ConnectionName}", config.ConnectionName);
@@ -114,51 +147,60 @@ public class PrinterWorker : IPrinterWorker
 
     private async Task ProcessJobInternalAsync(PrintJobResponse job, PrinterConfiguration config, CancellationToken ct)
     {
-        _logger.LogInformation("Processing job {RecordId} for client {ClientName} on printer {ConnectionName}", 
-            job.RecordId, job.ClientName, config.ConnectionName);
+        _logger.LogInformation("Processing job {RecordId} for client {ClientName} on printer {ConnectionName} (Total labels: {LabelCount})", 
+            job.RecordId, job.ClientName, config.ConnectionName, job.Labels.Count);
 
         try
         {
             await RetryHelper.ExecuteWithRetryAsync(async () =>
             {
-                // 2. Print label
-                if (job.LabelData != null && job.LabelData.Length > 0)
+                // Process all labels in the job
+                foreach (var label in job.Labels)
                 {
-                    if (string.Equals(job.LabelType, "ZPL", StringComparison.OrdinalIgnoreCase))
+                    if (label.Data == null || label.Data.Length == 0)
                     {
-                        await _printService.PrintZplAsync(job.LabelData, config, CancellationToken.None);
+                        _logger.LogWarning("Skipping empty label data for job {RecordId}, Purpose: {Purpose}", job.RecordId, label.Purpose);
+                        continue;
                     }
-                    else if (string.Equals(job.LabelType, "PDF", StringComparison.OrdinalIgnoreCase))
+
+                    if (string.Equals(label.Purpose, "LABEL", StringComparison.OrdinalIgnoreCase))
                     {
-                        await _printService.PrintPdfAsync(job.LabelData, config, isThermalLabel: true, CancellationToken.None);
+                        _logger.LogInformation("Printing label for job {RecordId} (Type: {Type})", job.RecordId, label.Type);
+                        
+                        if (string.Equals(label.Type, "ZPL", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await _printService.PrintZplAsync(label.Data, config, CancellationToken.None);
+                        }
+                        else if (string.Equals(label.Type, "PDF", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await _printService.PrintPdfAsync(label.Data, config, isThermalLabel: true, CancellationToken.None);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Unknown label type '{LabelType}' for job {RecordId}. Attempting raw print.", 
+                                label.Type, job.RecordId);
+                            await _printService.PrintRawAsync(label.Data, config, CancellationToken.None);
+                        }
+                    }
+                    else if (string.Equals(label.Purpose, "COMMERCIALINVOICE", StringComparison.OrdinalIgnoreCase) || 
+                             string.Equals(label.Purpose, "PACKINGSLIP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (config.SkipPackingSlips)
+                        {
+                            _logger.LogInformation("Skipping packing slip for job {RecordId} as configured", job.RecordId);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Printing packing slip for job {RecordId} (Purpose: {Purpose})", job.RecordId, label.Purpose);
+                            await _printService.PrintPdfAsync(label.Data, config, isThermalLabel: false, CancellationToken.None);
+                        }
                     }
                     else
                     {
-                        _logger.LogWarning("Unknown label type '{LabelType}' for job {RecordId}. Attempting raw print.", 
-                            job.LabelType, job.RecordId);
-                        await _printService.PrintRawAsync(job.LabelData, config, CancellationToken.None);
+                        _logger.LogInformation("Printing other document for job {RecordId} (Purpose: {Purpose})", job.RecordId, label.Purpose);
+                        // Default to PDF for other purposes (like custom slips)
+                        await _printService.PrintPdfAsync(label.Data, config, isThermalLabel: false, CancellationToken.None);
                     }
-                }
-
-                // 3. Print packing slip if exists and not skipped
-                if (job.PackingSlipData != null && job.PackingSlipData.Length > 0)
-                {
-                    if (config.SkipPackingSlips)
-                    {
-                        _logger.LogInformation("Skipping packing slip for job {RecordId} as configured", job.RecordId);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Printing packing slip for job {RecordId}", job.RecordId);
-                        await _printService.PrintPdfAsync(job.PackingSlipData, config, isThermalLabel: false, CancellationToken.None);
-                    }
-                }
-
-                // 4. Confirm print success
-                if (!string.IsNullOrEmpty(job.RecordId))
-                {
-                    await _apiClient.ConfirmPrintAsync(job.RecordId, CancellationToken.None);
-                    _logger.LogInformation("Successfully processed and confirmed job {RecordId}", job.RecordId);
                 }
             }, 
             retryCount: 3, 
@@ -170,7 +212,6 @@ public class PrinterWorker : IPrinterWorker
         {
             _failureCount++;
             _logger.LogError(ex, "Failed to process job {RecordId} for printer {ConnectionName} after retries", job.RecordId, config.ConnectionName);
-            // We don't confirm if it failed, so it might be retried or stay in queue depending on portal logic
         }
     }
 }

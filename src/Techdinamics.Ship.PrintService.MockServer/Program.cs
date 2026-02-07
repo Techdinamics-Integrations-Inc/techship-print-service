@@ -25,21 +25,16 @@ app.MapPost("/Integration/ProcessNextOrderExt", (HttpContext ctx, PrintJobStore 
     return Results.Content(BuildOrderXml(job), "application/xml");
 });
 
-app.MapPost("/Integration/ConfirmPrint", (HttpContext ctx, PrintJobStore store) =>
+app.MapPost("/Integration/ConfirmOrderExt", (HttpContext ctx, PrintJobStore store) =>
 {
     var orderId = ctx.Request.Query["orderId"].ToString();
-    if (string.IsNullOrEmpty(orderId))
-    {
-        // Support legacy/alternative param name used by client
-        orderId = ctx.Request.Query["recordId"].ToString();
-    }
     if (!string.IsNullOrEmpty(orderId))
     {
         store.MarkAsPrinted(orderId);
         store.LogPrintAction(orderId, "CONFIRMED");
         return Results.Ok();
     }
-    return Results.BadRequest("Missing orderId/recordId");
+    return Results.BadRequest("Missing orderId");
 });
 
 // --- Test Setup Endpoints ---

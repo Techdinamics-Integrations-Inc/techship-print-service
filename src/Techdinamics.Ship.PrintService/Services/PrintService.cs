@@ -35,6 +35,13 @@ public class PrintService : IPrintService
     public async Task PrintPdfAsync(byte[] pdfData, PrinterConfiguration config, bool isThermalLabel = false, CancellationToken ct = default)
     {
         var printerName = isThermalLabel ? config.ThermalPdfPrinterName : config.PdfPrinterName;
+        
+        // Fallback to PdfPrinterName if ThermalPdfPrinterName is not set
+        if (isThermalLabel && string.IsNullOrEmpty(printerName))
+        {
+            printerName = config.PdfPrinterName;
+        }
+
         _logger.LogInformation("Printing PDF for {ConnectionName} (Type: {Type}, Printer: {Printer})", 
             config.ConnectionName, config.PdfConnectionType, printerName);
 
@@ -42,8 +49,8 @@ public class PrintService : IPrintService
         {
             case PrinterConnectionType.Network:
                 // PDF to network usually needs conversion or IPP, which is more complex.
-                // For now, we'll log a warning or attempt direct TCP if it's a PDF-capable printer.
-                _logger.LogWarning("Network PDF printing is not fully implemented. Attempting direct TCP send.");
+                // For now, we'll log a warning and attempt direct TCP send, but it only works if printer supports direct PDF.
+                _logger.LogWarning("Network PDF printing is attempted via direct TCP to {Address}. This requires the printer to support direct PDF printing.", config.PdfPrinterAddress);
                 await PrintToNetworkAsync(pdfData, config.PdfPrinterAddress, ct);
                 break;
             case PrinterConnectionType.Local:
@@ -118,13 +125,33 @@ public class PrintService : IPrintService
             var args = isRaw ? $"-d {printerName} -o raw {tempFile}" : $"-d {printerName} {tempFile}";
             _logger.LogDebug("Executing: lp {Args}", args);
             
-            using var process = Process.Start("lp", args);
-            if (process != null)
+            using var process = new Process
             {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "lp",
+                    Arguments = args,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                }
+            };
+            
+            if (process.Start())
+            {
+                var stdoutTask = process.StandardOutput.ReadToEndAsync();
+                var stderrTask = process.StandardError.ReadToEndAsync();
+                
                 await process.WaitForExitAsync();
+                
+                var stdout = await stdoutTask;
+                var stderr = await stderrTask;
+                
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception($"lp command failed with exit code {process.ExitCode}");
+                    _logger.LogError("lp command failed. ExitCode: {ExitCode}, Stdout: {Stdout}, Stderr: {Stderr}", 
+                        process.ExitCode, stdout, stderr);
+                    throw new Exception($"lp command failed with exit code {process.ExitCode}: {stderr}");
                 }
             }
             else

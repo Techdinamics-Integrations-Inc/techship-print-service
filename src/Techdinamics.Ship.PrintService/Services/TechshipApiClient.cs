@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Techdinamics.Ship.PrintService.Models;
@@ -65,7 +66,7 @@ public class TechshipApiClient : ITechshipApiClient
         {
             // Note: Exact confirmation endpoint might need verification against legacy app
             // For now, following the pattern in the plan
-            var url = $"Integration/ConfirmPrint?recordId={Uri.EscapeDataString(recordId)}&clientKey={Uri.EscapeDataString(_config.ConnectionName)}";
+            var url = $"Integration/ConfirmOrderExt?orderId={Uri.EscapeDataString(recordId)}&clientKey={Uri.EscapeDataString(_config.ConnectionName)}";
             
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             if (!string.IsNullOrEmpty(_config.ApiSecret))

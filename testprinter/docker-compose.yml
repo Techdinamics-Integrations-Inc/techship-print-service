@@ -1,0 +1,9 @@
+services:
+  ipp-pdf-printer:
+    build: .
+    container_name: ipp-pdf-printer
+    ports:
+      - "58150:58150"
+    volumes:
+      - "D:\\vprinter:/output"
+    restart: unless-stopped

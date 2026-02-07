@@ -43,21 +43,58 @@ public class PrinterWorkerTests
         _mockApiClient.Setup(x => x.GetNextPrintJobAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(job);
         
-        // Stop after one successful loop to avoid infinite loop in test
-        _mockPrintService.Setup(x => x.PrintZplAsync(It.IsAny<byte[]>(), It.IsAny<PrinterConfiguration>(), It.IsAny<CancellationToken>()))
-            .Callback(() => cts.Cancel())
+        // Use a signal to cancel after confirmation is expected to have happened
+        _mockApiClient.Setup(x => x.ConfirmPrintAsync("JOB1", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _mockPrintService.Setup(x => x.PrintZplAsync(It.IsAny<byte[]>(), It.IsAny<PrinterConfiguration>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Callback(() => cts.Cancel());
 
         // Act
         try { await _worker.RunAsync(_config, cts.Token); } catch (OperationCanceledException) { }
 
         // Assert
-        _mockPrintService.Verify(x => x.PrintZplAsync(job.LabelData, _config, It.IsAny<CancellationToken>()), Times.Once);
-        _mockApiClient.Verify(x => x.ConfirmPrintAsync("JOB1", It.IsAny<CancellationToken>()), Times.Once);
+        _mockPrintService.Verify(x => x.PrintZplAsync(It.IsAny<byte[]>(), _config, It.IsAny<CancellationToken>()), Times.Once);
+        _mockApiClient.Verify(x => x.ConfirmPrintAsync("JOB1", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Fact]
-    public async Task RunAsync_DoesNotConfirm_WhenPrintFails()
+    public async Task RunAsync_PrintsMultipleLabels_WhenJobHasMany()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        var job = new PrintJobResponse
+        {
+            RecordId = "MULTI_JOB"
+        };
+        job.Labels.Add(new PrintJobLabel { Purpose = "LABEL", Type = "ZPL", Data = new byte[] { 1 } });
+        job.Labels.Add(new PrintJobLabel { Purpose = "LABEL", Type = "ZPL", Data = new byte[] { 2 } });
+        job.Labels.Add(new PrintJobLabel { Purpose = "PACKINGSLIP", Type = "PDF", Data = new byte[] { 3 } });
+
+        _mockApiClient.Setup(x => x.GetNextPrintJobAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(job);
+        
+        int printCount = 0;
+        _mockPrintService.Setup(x => x.PrintZplAsync(It.IsAny<byte[]>(), It.IsAny<PrinterConfiguration>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Callback(() => { if (++printCount >= 3) cts.Cancel(); });
+            
+        _mockPrintService.Setup(x => x.PrintPdfAsync(It.IsAny<byte[]>(), It.IsAny<PrinterConfiguration>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Callback(() => { if (++printCount >= 3) cts.Cancel(); });
+
+        // Act
+        try { await _worker.RunAsync(_config, cts.Token); } catch (OperationCanceledException) { }
+
+        // Assert
+        _mockPrintService.Verify(x => x.PrintZplAsync(It.IsAny<byte[]>(), _config, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _mockPrintService.Verify(x => x.PrintPdfAsync(It.IsAny<byte[]>(), _config, false, It.IsAny<CancellationToken>()), Times.Once);
+        _mockApiClient.Verify(x => x.ConfirmPrintAsync("MULTI_JOB", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task RunAsync_ConfirmsImmediately_EvenIfPrintFailsLater()
     {
         // Arrange
         var cts = new CancellationTokenSource();
@@ -73,13 +110,16 @@ public class PrinterWorkerTests
         _mockPrintService.Setup(x => x.PrintZplAsync(It.IsAny<byte[]>(), It.IsAny<PrinterConfiguration>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new System.Exception("Print failed"));
 
-        // Allow some time then cancel
-        cts.CancelAfter(500);
+        // Use a signal to cancel after confirmation is expected to have happened
+        _mockApiClient.Setup(x => x.ConfirmPrintAsync("JOB1", It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .Callback(() => cts.Cancel());
 
         // Act
         try { await _worker.RunAsync(_config, cts.Token); } catch (OperationCanceledException) { }
 
         // Assert
-        _mockApiClient.Verify(x => x.ConfirmPrintAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Confirm should be called because it happens before the queue processing (which fails)
+        _mockApiClient.Verify(x => x.ConfirmPrintAsync("JOB1", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

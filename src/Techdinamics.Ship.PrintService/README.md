@@ -78,6 +78,7 @@ The service is configured via `appsettings.json`. You can define multiple printe
         "ConnectionName": "office",
         "PdfConnectionType": "Local",
         "PdfPrinterName": "HP_LaserJet_Office",
+        "ThermalPdfPrinterName": "Zebra_Thermal_PDF",
         "SkipPackingSlips": false,
         "PollingIntervalMs": 5000
       },
@@ -108,6 +109,7 @@ The service is configured via `appsettings.json`. You can define multiple printe
 | `ZplPrinterName` | System printer name for local ZPL | Yes* | - |
 | `PdfConnectionType` | `Network` or `Local` | No | `Local` |
 | `PdfPrinterName` | System printer name for PDF printing | Yes** | - |
+| `ThermalPdfPrinterName` | System printer name for thermal label PDFs | No | - |
 | `PollingIntervalMs`| Interval between polling requests | No | `2000` |
 | `SkipPackingSlips` | If true, packing slips will be ignored | No | `false` |
 

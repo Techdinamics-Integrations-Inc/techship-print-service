@@ -1,0 +1,1 @@
+This folder contains sample docker-compose to create virtual network ipp printer which pushes everything to d:\virtual
