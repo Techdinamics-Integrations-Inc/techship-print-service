@@ -1,6 +1,6 @@
 # Techship Print Service
 
-Modern .NET service for Techship label printing, designed to run in Linux Docker containers. Replaces the legacy Techdinamics.PrintClient WPF application.
+Modern .NET service for Techship label printing, designed to run in Linux Docker containers.
 
 ## Overview
 
