@@ -1,20 +1,19 @@
-version: '3.8'
+# Built-in CUPS mode: the container runs its own CUPS (web UI on port 631) for USB/SMB/IPP printers.
+# If the machine already runs CUPS, use docker-compose.remote-cups.yml instead.
 services:
   print-service:
-    build: .
-    image: techship-print-service:latest
+    image: ghcr.io/techdinamics-integrations-inc/techship-print-service:latest
     container_name: techship-print-service
     restart: unless-stopped
-    # network_mode: host
     ports:
       - "631:631"
       - "8080:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - CUPS_USER=admin
-      - CUPS_PASSWORD=admin
+      - CUPS_PASSWORD=change-me
     volumes:
-      - ./config/appsettings.json:/app/appsettings.json:ro
+      - ./config/appsettings.json:/app/config/appsettings.json:ro
       - cups-config:/etc/cups
       - cups-certs:/etc/cups/ssl
     privileged: true    # Often needed for USB printer access

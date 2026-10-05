@@ -1,0 +1,24 @@
+# Remote CUPS mode: print through an existing CUPS server instead of the built-in one.
+# Printer names in appsettings.json (PdfPrinterName, ZplPrinterName, ThermalPdfPrinterName)
+# must match queue names on that CUPS server. ZPL is sent with "-o raw".
+services:
+  print-service:
+    image: ghcr.io/techdinamics-integrations-inc/techship-print-service:latest
+    container_name: techship-print-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      # Option A - CUPS on this Docker host, via its socket (no CUPS config changes needed):
+      - CUPS_SERVER=/run/host-cups/cups.sock
+      # Option B - CUPS on another machine (it must accept jobs from this host):
+      # - CUPS_SERVER=cups-server.example.local:631
+    volumes:
+      - ./config/appsettings.json:/app/config/appsettings.json:ro
+      - /run/cups:/run/host-cups    # Option A only; remove for option B
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

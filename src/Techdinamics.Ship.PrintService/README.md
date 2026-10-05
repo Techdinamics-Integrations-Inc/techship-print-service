@@ -21,8 +21,16 @@ The Techship Print Service monitors print queues from one or more Techship porta
 
 ## Quick Start
 
+The image is published at `ghcr.io/techdinamics-integrations-inc/techship-print-service` for `linux/amd64` and `linux/arm64`:
+```bash
+docker pull ghcr.io/techdinamics-integrations-inc/techship-print-service:latest
+```
+
 ### 1. Prepare Configuration
-Download `docker-compose.yml` and `config/appsettings.example.json`. 
+Download `config/appsettings.example.json` and the compose file for your [CUPS mode](#cups-modes):
+- `docker-compose.yml` - built-in CUPS (default)
+- `docker-compose.remote-cups.yml` - CUPS on the Docker host or another machine
+
 Copy `config/appsettings.example.json` to `config/appsettings.json`.
 
 ### 2. Configure Printers
@@ -31,12 +39,41 @@ Edit `config/appsettings.json` with your portal details and printer addresses. S
 ### 3. Start the Service
 Run the following command in the directory containing `docker-compose.yml`:
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+or, for remote CUPS:
+```bash
+docker compose -f docker-compose.remote-cups.yml up -d
 ```
 
-Note: The container runs in `privileged` mode to allow CUPS to access local USB printers.
+Note: In built-in CUPS mode the container runs in `privileged` mode to allow CUPS to access local USB printers.
 
-## CUPS Management
+## CUPS Modes
+
+Network ZPL printers (`ZplConnectionType: Network`) are printed to directly over TCP and do not use CUPS in either mode. CUPS is used for `Local` printers (PDF, and ZPL with `ZplConnectionType: Local`).
+
+| Mode | When to use | How |
+|------|-------------|-----|
+| **Built-in** (default) | The machine has no CUPS of its own | `docker-compose.yml`. Add printers in the container's CUPS web UI on port 631. |
+| **Remote** | CUPS already runs on the Docker host or on another server | `docker-compose.remote-cups.yml`. Set `CUPS_SERVER`; the built-in CUPS is not started. |
+
+### Remote CUPS
+Set `CUPS_SERVER` to the CUPS server to print through:
+- **CUPS on the Docker host** - mount the host's CUPS socket directory and point at it. No changes to the host's CUPS are needed:
+  ```yaml
+  environment:
+    - CUPS_SERVER=/run/host-cups/cups.sock
+  volumes:
+    - /run/cups:/run/host-cups
+  ```
+- **CUPS on another machine** - `CUPS_SERVER=cups-server.example.local:631`. That server must listen on the network and allow print jobs from the Docker host's IP (`<Location />` in `cupsd.conf`).
+
+Requirements on the remote CUPS server:
+- Queue names must match `PdfPrinterName`, `ThermalPdfPrinterName` and `ZplPrinterName` in `appsettings.json`.
+- ZPL is sent with `lp -o raw`, so ZPL queues must be raw queues.
+- Do not publish port 631 from the container when the host already runs CUPS, or the container will fail to start.
+
+## CUPS Management (built-in mode)
 
 The service includes a built-in CUPS instance for local/USB and SMB printing. You can manage printers via the CUPS web interface at `http://localhost:631` (if running locally) or `http://[container-ip]:631`.
 
@@ -128,15 +165,15 @@ docker run -d \
   -e PrintService__Printers__0__ApiSecret=your_secret \
   -e PrintService__Printers__0__ConnectionName=client_key \
   -e PrintService__Printers__0__ZplPrinterAddress=192.168.1.100:9100 \
-  techship-print-service:latest
+  ghcr.io/techdinamics-integrations-inc/techship-print-service:latest
 ```
 
 ### Running with Mount (Custom Config)
 ```bash
 docker run -d \
   --name techship-print-service \
-  -v $(pwd)/config/appsettings.json:/app/appsettings.json:ro \
-  techship-print-service:latest
+  -v $(pwd)/config/appsettings.json:/app/config/appsettings.json:ro \
+  ghcr.io/techdinamics-integrations-inc/techship-print-service:latest
 ```
 
 ## Troubleshooting
@@ -163,6 +200,6 @@ docker logs techship-print-service
 ## Updating
 To update to the latest version:
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
