@@ -1,12 +1,28 @@
-﻿**/bin/
+**/bin/
 **/obj/
 **/.git
 **/node_modules
 *.md
 .env
-config/appsettings.json
 docker-compose*
 Dockerfile*
 .idea
 .vs
 .vscode
+
+# Local configuration and secrets - never bake into the image
+config/appsettings.json
+**/appsettings.*.json
+!config/appsettings.example.json
+*.user
+
+# Local runtime artifacts
+*.log
+health.json
+health.txt
+
+# Dev-only folders
+packages/
+plan/
+run-integration-test.ps1
+requirements.txt
